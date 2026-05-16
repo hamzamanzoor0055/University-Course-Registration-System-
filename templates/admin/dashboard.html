@@ -1,0 +1,164 @@
+{% extends 'base.html' %}
+{% block title %}Admin Dashboard{% endblock %}
+
+{% block head %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Admin Dashboard</h1>
+    <p class="text-sm text-gray-500 mt-0.5">System overview and enrollment statistics.</p>
+  </div>
+
+  <!-- Metric cards -->
+  <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex items-center gap-4">
+      <div class="bg-blue-100 text-blue-600 rounded-full p-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M17 20h5v-2a4 4 0 00-5-3.87M9 20H4v-2a4 4 0 015-3.87m6 5.87a4 4 0 10-8 0m12-8a4 4 0 10-8 0 4 4 0 008 0z"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Students</p>
+        <p class="text-3xl font-bold text-gray-800">{{ total_students }}</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex items-center gap-4">
+      <div class="bg-green-100 text-green-600 rounded-full p-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Total Enrollments</p>
+        <p class="text-3xl font-bold text-gray-800">{{ total_enrollments }}</p>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6 flex items-center gap-4">
+      <div class="bg-purple-100 text-purple-600 rounded-full p-3">
+        <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round"
+                d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/>
+        </svg>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide font-medium">Active Offerings</p>
+        <p class="text-3xl font-bold text-gray-800">{{ active_courses }}</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Chart + GPA side by side -->
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <!-- Enrollment bar chart -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+      <h2 class="font-semibold text-gray-700 mb-4">Enrollments per Course</h2>
+      <canvas id="enrollmentChart" height="220"></canvas>
+    </div>
+
+    <!-- GPA distribution -->
+    <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+      <div class="px-6 py-4 border-b border-gray-100">
+        <h2 class="font-semibold text-gray-700">GPA by Department</h2>
+      </div>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="text-left px-6 py-3">Department</th>
+            <th class="text-left px-6 py-3">Avg CGPA</th>
+            <th class="text-left px-6 py-3">Students</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for g in gpa_dist %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-3 font-medium text-gray-800">{{ g.dept_name }}</td>
+            <td class="px-6 py-3">
+              <span class="font-bold {% if g.avg_cgpa >= 3.5 %}text-green-600{% elif g.avg_cgpa >= 2.5 %}text-blue-600{% else %}text-orange-500{% endif %}">
+                {{ '%.2f' % g.avg_cgpa }}
+              </span>
+            </td>
+            <td class="px-6 py-3 text-gray-600">{{ g.student_count }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Recent enrollment report -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-semibold text-gray-700">Recent Enrollment Report</h2>
+      <a href="{{ url_for('admin.reports') }}" class="text-sm text-blue-600 hover:underline">Full Report &rarr;</a>
+    </div>
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+        <tr>
+          <th class="text-left px-6 py-3">Course</th>
+          <th class="text-left px-6 py-3">Semester</th>
+          <th class="text-left px-6 py-3">Enrolled</th>
+          <th class="text-left px-6 py-3">Capacity</th>
+          <th class="text-left px-6 py-3">Fill %</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for r in enrollment_report %}
+        {% set pct = ((r.enrolled_count / r.seats_total) * 100) | int if r.seats_total else 0 %}
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-6 py-3 font-medium text-gray-800">{{ r.course_name }}</td>
+          <td class="px-6 py-3 text-gray-600">{{ r.semester_name }} {{ r.year }}</td>
+          <td class="px-6 py-3 text-gray-700 font-medium">{{ r.enrolled_count }}</td>
+          <td class="px-6 py-3 text-gray-600">{{ r.seats_total }}</td>
+          <td class="px-6 py-3">
+            <div class="flex items-center gap-2">
+              <div class="w-24 bg-gray-100 rounded-full h-1.5">
+                <div class="h-1.5 rounded-full {% if pct >= 80 %}bg-red-500{% elif pct >= 50 %}bg-yellow-400{% else %}bg-green-500{% endif %}"
+                     style="width: {{ pct }}%"></div>
+              </div>
+              <span class="text-xs text-gray-500">{{ pct }}%</span>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  const labels = {{ chart_labels | safe }};
+  const data   = {{ chart_data   | safe }};
+
+  new Chart(document.getElementById('enrollmentChart'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [{
+        label: 'Enrolled Students',
+        data,
+        backgroundColor: 'rgba(59, 130, 246, 0.7)',
+        borderColor: 'rgba(59, 130, 246, 1)',
+        borderWidth: 1,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 1 } },
+        x: { ticks: { maxRotation: 30 } }
+      }
+    }
+  });
+</script>
+{% endblock %}

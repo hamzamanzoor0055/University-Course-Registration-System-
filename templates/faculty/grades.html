@@ -1,0 +1,99 @@
+{% extends 'base.html' %}
+{% block title %}Manage Grades{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Manage Grades</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Select an offering to enter or update student grades.</p>
+  </div>
+
+  <!-- Offering selector -->
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-5">
+    <form method="GET" action="{{ url_for('faculty.grades') }}" class="flex items-end gap-4 flex-wrap">
+      <div class="flex-1 min-w-[200px]">
+        <label for="offering_id" class="block text-sm font-medium text-gray-700 mb-1">
+          Select Course Offering
+        </label>
+        <select name="offering_id" id="offering_id"
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">-- Choose an offering --</option>
+          {% for o in offerings %}
+          <option value="{{ o.offering_id }}"
+            {% if selected_offering and selected_offering.offering_id == o.offering_id %}selected{% endif %}>
+            {{ o.course_name }} — {{ o.semester_name }} {{ o.year }}
+          </option>
+          {% endfor %}
+        </select>
+      </div>
+      <button type="submit"
+              class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium
+                     px-4 py-2 rounded-lg transition">
+        Load Students
+      </button>
+    </form>
+  </div>
+
+  <!-- Grade entry -->
+  {% if selected_offering %}
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    <div class="px-6 py-4 border-b border-gray-100 bg-gray-50">
+      <h2 class="font-semibold text-gray-700">
+        {{ selected_offering.course_name }}
+        <span class="text-gray-400 font-normal text-sm">
+          &mdash; {{ selected_offering.semester_name }} {{ selected_offering.year }}
+        </span>
+      </h2>
+    </div>
+
+    {% if students %}
+    <form method="POST" action="{{ url_for('faculty.submit_grades') }}">
+      <input type="hidden" name="offering_id" value="{{ selected_offering.offering_id }}" />
+      <input type="hidden" name="semester_id" value="{{ selected_offering.semester_id }}" />
+
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+          <tr>
+            <th class="text-left px-6 py-3">Student</th>
+            <th class="text-left px-6 py-3">Email</th>
+            <th class="text-left px-6 py-3">Grade</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for s in students %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-6 py-3 font-medium text-gray-800">{{ s.student_name }}</td>
+            <td class="px-6 py-3 text-gray-500 text-xs">{{ s.email }}</td>
+            <td class="px-6 py-3">
+              <select name="grade_{{ s.enrollment_id }}"
+                      class="border border-gray-300 rounded px-2 py-1 text-sm
+                             focus:outline-none focus:ring-1 focus:ring-blue-500">
+                <option value="">-- No Grade --</option>
+                {% for g in ['A', 'B', 'C', 'D', 'F'] %}
+                <option value="{{ g }}" {% if s.grade == g %}selected{% endif %}>{{ g }}</option>
+                {% endfor %}
+              </select>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <div class="px-6 py-4 border-t border-gray-100 flex justify-end">
+        <button type="submit"
+                class="bg-green-600 hover:bg-green-700 text-white font-semibold
+                       text-sm px-5 py-2 rounded-lg transition">
+          Save Grades
+        </button>
+      </div>
+    </form>
+    {% else %}
+      <div class="px-6 py-10 text-center text-gray-400 text-sm">
+        No students are enrolled in this offering.
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

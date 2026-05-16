@@ -1,0 +1,55 @@
+{% extends 'base.html' %}
+{% block title %}Faculty Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Faculty Dashboard</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Your assigned course offerings.</p>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+    {% if offerings %}
+    <table class="w-full text-sm">
+      <thead class="bg-gray-50 text-gray-500 uppercase text-xs">
+        <tr>
+          <th class="text-left px-6 py-3">Course</th>
+          <th class="text-left px-6 py-3">Credits</th>
+          <th class="text-left px-6 py-3">Semester</th>
+          <th class="text-left px-6 py-3">Enrolled</th>
+          <th class="text-left px-6 py-3">Seats</th>
+          <th class="text-left px-6 py-3">Action</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for o in offerings %}
+        <tr class="hover:bg-gray-50 transition">
+          <td class="px-6 py-3 font-medium text-gray-800">{{ o.course_name }}</td>
+          <td class="px-6 py-3 text-gray-600">{{ o.credit_hours }}</td>
+          <td class="px-6 py-3 text-gray-600">{{ o.semester_name }} {{ o.year }}</td>
+          <td class="px-6 py-3 text-gray-700 font-medium">{{ o.enrolled_count }}</td>
+          <td class="px-6 py-3">
+            {% if o.seats_available > 0 %}
+              <span class="text-green-700">{{ o.seats_available }}/{{ o.seats_total }}</span>
+            {% else %}
+              <span class="text-red-500">Full</span>
+            {% endif %}
+          </td>
+          <td class="px-6 py-3">
+            <a href="{{ url_for('faculty.grades', offering_id=o.offering_id) }}"
+               class="text-xs bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded transition font-medium">
+              Manage Grades
+            </a>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+      <div class="px-6 py-10 text-center text-gray-400 text-sm">
+        No course offerings assigned to you yet.
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,46 @@
+{% extends 'base.html' %}
+{% block title %}My Timetable{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Weekly Timetable</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Your schedule for currently enrolled courses.</p>
+  </div>
+
+  <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+    {% for day in days %}
+      <div class="bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden">
+        <div class="bg-blue-600 px-4 py-2">
+          <h2 class="text-sm font-semibold text-white">{{ day }}</h2>
+        </div>
+        <div class="divide-y divide-gray-100 min-h-[80px]">
+          {% if timetable_by_day[day] %}
+            {% for slot in timetable_by_day[day] %}
+            <div class="px-4 py-3">
+              <p class="font-medium text-gray-800 text-sm">{{ slot.course_name }}</p>
+              <p class="text-xs text-blue-600 font-medium mt-0.5">
+                {{ slot.start_fmt }} &mdash; {{ slot.end_fmt }}
+              </p>
+              <p class="text-xs text-gray-500 mt-0.5">
+                {{ slot.building }}&nbsp;&bull;&nbsp;{{ slot.room_type }}
+              </p>
+            </div>
+            {% endfor %}
+          {% else %}
+            <div class="px-4 py-4 text-xs text-gray-400 italic">No classes</div>
+          {% endif %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+  {% set total_slots = namespace(count=0) %}
+  {% for day in days %}{% set total_slots.count = total_slots.count + timetable_by_day[day]|length %}{% endfor %}
+  {% if total_slots.count == 0 %}
+    <div class="bg-white rounded-xl border border-gray-200 px-6 py-10 text-center text-gray-400 text-sm">
+      No timetable slots found. Enroll in courses to see your schedule.
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
