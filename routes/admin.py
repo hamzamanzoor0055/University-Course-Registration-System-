@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
 import mysql.connector
 import json
+from werkzeug.security import generate_password_hash
 from db import get_db
 from routes.utils import login_required
 
@@ -150,3 +151,94 @@ def reports():
         chart_labels=chart_labels,
         chart_data=chart_data,
     )
+
+
+@admin_bp.route('/students')
+@login_required(role='admin')
+def students():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute(
+        '''SELECT s.student_id, s.name, s.email, d.dept_name, s.cgpa
+           FROM students s
+           LEFT JOIN departments d ON s.dept_id = d.dept_id
+           ORDER BY s.name'''
+    )
+    all_students = cursor.fetchall()
+    cursor.close()
+    return render_template('admin/students.html', students=all_students)
+
+
+@admin_bp.route('/students/add', methods=['GET', 'POST'])
+@login_required(role='admin')
+def add_student():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute('SELECT dept_id, dept_name FROM departments ORDER BY dept_name')
+    departments = cursor.fetchall()
+    cursor.close()
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        dept_id = request.form.get('dept_id', type=int)
+
+        if not name or not email or not password or not dept_id:
+            flash('All fields are required.', 'error')
+            return render_template('admin/add_student.html', departments=departments)
+
+        password_hash = generate_password_hash(password)
+        cursor = db.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO students (name, email, password_hash, dept_id) VALUES (%s, %s, %s, %s)',
+                (name, email, password_hash, dept_id)
+            )
+            flash(f'Student "{name}" added successfully.', 'success')
+            return redirect(url_for('admin.students'))
+        except mysql.connector.Error as e:
+            flash(f'Failed to add student: {e.msg}', 'error')
+            return render_template('admin/add_student.html', departments=departments)
+        finally:
+            cursor.close()
+
+    return render_template('admin/add_student.html', departments=departments)
+
+
+@admin_bp.route('/faculty/add', methods=['GET', 'POST'])
+@login_required(role='admin')
+def add_faculty():
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute('SELECT dept_id, dept_name FROM departments ORDER BY dept_name')
+    departments = cursor.fetchall()
+    cursor.close()
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        dept_id = request.form.get('dept_id', type=int)
+        designation = request.form.get('designation', '').strip()
+
+        if not name or not email or not password or not dept_id or not designation:
+            flash('All fields are required.', 'error')
+            return render_template('admin/add_faculty.html', departments=departments)
+
+        password_hash = generate_password_hash(password)
+        cursor = db.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO faculty (name, email, password_hash, dept_id, designation) VALUES (%s, %s, %s, %s, %s)',
+                (name, email, password_hash, dept_id, designation)
+            )
+            flash(f'Faculty member "{name}" added successfully.', 'success')
+            return redirect(url_for('admin.dashboard'))
+        except mysql.connector.Error as e:
+            flash(f'Failed to add faculty: {e.msg}', 'error')
+            return render_template('admin/add_faculty.html', departments=departments)
+        finally:
+            cursor.close()
+
+    return render_template('admin/add_faculty.html', departments=departments)

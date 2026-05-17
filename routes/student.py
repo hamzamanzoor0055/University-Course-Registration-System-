@@ -105,16 +105,16 @@ def drop():
     finally:
         cursor.close()
 
-    return redirect(url_for('student.dashboard'))
+    return redirect(url_for('student.courses'))
 
 
 @student_bp.route('/transcript')
 @login_required(role='student')
 def transcript():
     db = get_db()
-    cursor = db.cursor(dictionary=True)
     student_id = session['user_id']
 
+    cursor = db.cursor(dictionary=True)
     cursor.execute(
         '''SELECT course_name, credit_hours, semester_name, year, faculty_name, grade
            FROM v_student_transcript
@@ -123,9 +123,29 @@ def transcript():
         (student_id,)
     )
     records = cursor.fetchall()
+
+    cursor.execute('SELECT semester_id FROM semesters ORDER BY year DESC, semester_id DESC LIMIT 1')
+    sem_row = cursor.fetchone()
     cursor.close()
 
-    return render_template('student/transcript.html', records=records)
+    cgpa = None
+    if sem_row:
+        cursor = db.cursor()
+        try:
+            cursor.callproc('calculate_gpa', [student_id, sem_row['semester_id']])
+        except mysql.connector.Error as e:
+            flash(f'GPA calculation error: {e.msg}', 'error')
+        finally:
+            cursor.close()
+
+        cursor = db.cursor(dictionary=True)
+        cursor.execute('SELECT cgpa FROM students WHERE student_id = %s', (student_id,))
+        row = cursor.fetchone()
+        cursor.close()
+        if row:
+            cgpa = row['cgpa']
+
+    return render_template('student/transcript.html', records=records, cgpa=cgpa)
 
 
 @student_bp.route('/timetable')

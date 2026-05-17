@@ -27,6 +27,8 @@
         {% elif session.role == 'admin' %}
           <a href="{{ url_for('admin.dashboard') }}"     class="nav-link {% if request.endpoint == 'admin.dashboard'     %}active{% endif %}">Dashboard</a>
           <a href="{{ url_for('admin.courses') }}"       class="nav-link {% if request.endpoint == 'admin.courses'       %}active{% endif %}">Courses</a>
+          <a href="{{ url_for('admin.students') }}"      class="nav-link {% if request.endpoint in ('admin.students', 'admin.add_student') %}active{% endif %}">Students</a>
+          <a href="{{ url_for('admin.add_faculty') }}"   class="nav-link {% if request.endpoint == 'admin.add_faculty'   %}active{% endif %}">Add Faculty</a>
           <a href="{{ url_for('admin.reports') }}"       class="nav-link {% if request.endpoint == 'admin.reports'       %}active{% endif %}">Reports</a>
         {% endif %}
       </div>

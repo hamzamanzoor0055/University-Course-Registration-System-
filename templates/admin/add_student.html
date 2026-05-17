@@ -1,0 +1,63 @@
+{% extends 'base.html' %}
+{% block title %}Add Student{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto space-y-6">
+  <div>
+    <h1 class="text-2xl font-bold text-gray-800">Add New Student</h1>
+    <p class="text-sm text-gray-500 mt-0.5">Create a student account manually.</p>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 shadow-sm p-6">
+    <form method="POST" action="{{ url_for('admin.add_student') }}" novalidate class="space-y-5">
+      <div>
+        <label for="name" class="block text-xs font-medium text-gray-600 mb-1">Full Name</label>
+        <input type="text" id="name" name="name" required
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
+               placeholder="Jane Doe" />
+      </div>
+
+      <div>
+        <label for="email" class="block text-xs font-medium text-gray-600 mb-1">Email Address</label>
+        <input type="email" id="email" name="email" required
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
+               placeholder="jane@ucrs.edu" />
+      </div>
+
+      <div>
+        <label for="password" class="block text-xs font-medium text-gray-600 mb-1">Password</label>
+        <input type="password" id="password" name="password" required
+               class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                      focus:outline-none focus:ring-2 focus:ring-blue-500"
+               placeholder="••••••••" />
+      </div>
+
+      <div>
+        <label for="dept_id" class="block text-xs font-medium text-gray-600 mb-1">Department</label>
+        <select id="dept_id" name="dept_id" required
+                class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm
+                       focus:outline-none focus:ring-2 focus:ring-blue-500">
+          <option value="">-- Select Department --</option>
+          {% for d in departments %}
+          <option value="{{ d.dept_id }}">{{ d.dept_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="flex items-center gap-3 pt-2">
+        <button type="submit"
+                class="bg-blue-600 hover:bg-blue-700 text-white font-semibold
+                       text-sm px-6 py-2 rounded-lg transition">
+          Add Student
+        </button>
+        <a href="{{ url_for('admin.students') }}"
+           class="text-sm text-gray-500 hover:text-gray-700 transition">
+          Cancel
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, request, redirect, url_for, session, flash
-from werkzeug.security import check_password_hash
+from werkzeug.security import check_password_hash, generate_password_hash
+import mysql.connector
 from db import get_db
 
 auth_bp = Blueprint('auth', __name__)
@@ -58,6 +59,45 @@ def login():
         flash('Invalid email or password.', 'error')
 
     return render_template('auth/login.html')
+
+
+@auth_bp.route('/register', methods=['GET', 'POST'])
+def register():
+    if 'user_id' in session:
+        return redirect(url_for(f'{session["role"]}.dashboard'))
+
+    db = get_db()
+    cursor = db.cursor(dictionary=True)
+    cursor.execute('SELECT dept_id, dept_name FROM departments ORDER BY dept_name')
+    departments = cursor.fetchall()
+    cursor.close()
+
+    if request.method == 'POST':
+        name = request.form.get('name', '').strip()
+        email = request.form.get('email', '').strip().lower()
+        password = request.form.get('password', '')
+        dept_id = request.form.get('dept_id', type=int)
+
+        if not name or not email or not password or not dept_id:
+            flash('All fields are required.', 'error')
+            return render_template('auth/register.html', departments=departments)
+
+        password_hash = generate_password_hash(password)
+        cursor = db.cursor()
+        try:
+            cursor.execute(
+                'INSERT INTO students (name, email, password_hash, dept_id) VALUES (%s, %s, %s, %s)',
+                (name, email, password_hash, dept_id)
+            )
+            flash('Registration successful! Please log in.', 'success')
+            return redirect(url_for('auth.login'))
+        except mysql.connector.Error as e:
+            flash(f'Registration failed: {e.msg}', 'error')
+            return render_template('auth/register.html', departments=departments)
+        finally:
+            cursor.close()
+
+    return render_template('auth/register.html', departments=departments)
 
 
 @auth_bp.route('/logout')
